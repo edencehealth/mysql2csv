@@ -1,7 +1,8 @@
 # mysql2csv
 
 This is a Docker utility for saving the contents of MySQL and MariaDB database
-tables into CSV files.
+tables into CSV files. It is published publicly to
+[Docker Hub at edence/mysql2csv](https://hub.docker.com/r/edence/mysql2csv)
 
 ## Configuration
 
