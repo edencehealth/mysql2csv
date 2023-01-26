@@ -96,7 +96,7 @@ def main() -> int:
     argp.add_argument(
         "--loglevel",
         default=os.environ.get("LOG_LEVEL", "INFO"),
-        choices=logging._nameToLevel,
+        choices=list(logging._nameToLevel)[:-1],
         help="the python logging level to use",
     )
     argp.add_argument(
