@@ -5,8 +5,42 @@ import csv
 import logging
 import os
 import sys
+from typing import Sequence
 
 import mariadb
+
+
+def dump_tables(
+    cnxn: mariadb.Connection,
+    tables: Sequence[str],
+    output_dir: str,
+    dialect: str,
+    encoding: str = "utf8",
+) -> bool:
+    """
+    given a database server connection and a list of table names, write a CSV
+    file containing the complete contents of each table into the given output
+    directory
+    """
+    for table_name in tables:
+        logging.debug("dumping table: %s", table_name)
+        cur = cnxn.cursor()
+
+        # attempting to prevent injection... this could be improved
+        esc_table_name = cnxn.escape_string(table_name)
+
+        cur.execute(f"SELECT * FROM {esc_table_name}")  # nosec: escaping value
+        fieldnames = [i[0] for i in cur.description]
+        data = cur.fetchall()
+
+        output_filename = os.path.join(output_dir, table_name + ".csv")
+        with open(output_filename, "w", newline="", encoding=encoding) as csvfile:
+            writer = csv.writer(csvfile, dialect=dialect)
+            writer.writerow(fieldnames)
+            writer.writerows(data)
+        logging.info("wrote to file: %s", output_filename)
+
+    return False
 
 
 def main() -> int:
@@ -51,12 +85,18 @@ def main() -> int:
     argp.add_argument(
         "--csvdialect",
         default=os.environ.get("CSV_DIALECT", "excel"),
+        choices=csv.list_dialects(),
         help="the python csv.writer dialect. see: https://docs.python.org/3/library/csv.html",
+    )
+    argp.add_argument(
+        "--csvencoding",
+        default=os.environ.get("CSV_ENCODING", "utf8"),
+        help="the character encoding to use when writing the CSV files",
     )
     argp.add_argument(
         "--loglevel",
         default=os.environ.get("LOG_LEVEL", "INFO"),
-        choices=("CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"),
+        choices=logging._nameToLevel,
         help="the python logging level to use",
     )
     argp.add_argument(
@@ -67,28 +107,19 @@ def main() -> int:
     args = argp.parse_args()
     logging.basicConfig(level=args.loglevel)
 
-    conn = mariadb.connect(
+    with mariadb.connect(
         user=args.user,
         password=args.password,
         host=args.host,
         database=args.database,
-    )
-    cur = conn.cursor()
-
-    for table_name in args.table_name:
-        logging.debug("starting on table: %s", table_name)
-        cur.execute(f"SELECT * FROM {table_name}")
-        fieldnames = [i[0] for i in cur.description]
-        data = cur.fetchall()
-
-        output_filename = os.path.join(args.path, table_name + ".csv")
-        with open(output_filename, "w", newline="") as csvfile:
-            writer = csv.writer(csvfile, dialect=args.csvdialect)
-            writer.writerow(fieldnames)
-            writer.writerows(data)
-        logging.info("wrote to file: %s", output_filename)
-
-    conn.close()
+    ) as cnxn:
+        dump_tables(
+            cnxn,
+            args.table_name,
+            args.path,
+            args.csvdialect,
+            args.csvencoding,
+        )
 
     return 0
 
