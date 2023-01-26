@@ -79,12 +79,12 @@ def main() -> int:
     )
     argp.add_argument(
         "--path",
-        default=os.environ.get("OUTPUT_PATH", "./"),
+        default=os.environ.get("OUTPUT_PATH", os.getcwd()),
         help="the base output path to use when creating csv files",
     )
     argp.add_argument(
         "--csvdialect",
-        default=os.environ.get("CSV_DIALECT", "excel"),
+        default=os.environ.get("CSV_DIALECT", "unix"),
         choices=csv.list_dialects(),
         help="the python csv.writer dialect. see: https://docs.python.org/3/library/csv.html",
     )
