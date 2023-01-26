@@ -6,7 +6,7 @@ services:
       - "./input:/work:rw"
       - "dbdata:/var/lib/mysql"
     environment:
-      - "MARIADB_ROOT_PASSWORD=testing"
+      DB_PASSWORD: "testing"
     ports:
       - "3306:3306"
     init: true
@@ -15,14 +15,16 @@ services:
       - db
     build: .
     environment:
-      DB_USER: "root"
-      DB_PASSWORD: "testing"
-      DB_HOST: "db"
-      LOG_LEVEL: "DEBUG"
       CSV_DIALECT: "excel" # see also: unix ; https://docs.python.org/3/library/csv.html
+      DB_DATABASE: "mysql"
+      DB_HOST: "db"
+      DB_PASSWORD: "testing"
+      DB_USER: "root"
+      LOG_LEVEL: "DEBUG"
     command:
-      - concept
+      - time_zone
+      - time_zone_transition
     volumes:
-      - "./output:/work"
+      - "./output:/output"
 volumes:
   dbdata:

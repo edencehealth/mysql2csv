@@ -45,7 +45,7 @@ def main() -> int:
     )
     argp.add_argument(
         "--path",
-        default=os.environ.get("OUTPUT_PATH", "/work"),
+        default=os.environ.get("OUTPUT_PATH", "./"),
         help="the base output path to use when creating csv files",
     )
     argp.add_argument(

@@ -28,5 +28,5 @@ WORKDIR /app
 COPY src/mysql2csv ./mysql2csv
 ENV PYTHONPATH="/app"
 
-WORKDIR /work
+WORKDIR /output
 ENTRYPOINT ["python3", "-m", "mysql2csv"]
