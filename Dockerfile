@@ -1,6 +1,8 @@
 FROM debian:testing-slim
 LABEL maintainer="edenceHealth <info@edence.health>"
 
+COPY requirements.txt /
+
 RUN set -eux; \
   export \
     AG="apt-get -yq" \
@@ -15,14 +17,16 @@ RUN set -eux; \
     python3-dev \
     python3-pip \
   ; \
+  pip3 install -r /requirements.txt; \
+  pip3 cache purge; \
+  $AG purge \
+    gcc \
+    python3-dev \
+  ; \
+  $AG autoremove; \
   rm -rf \
     /var/lib/apt/lists/* \
   ;
-
-COPY requirements.txt /
-RUN set -eux; \
-  pip3 install -r /requirements.txt; \
-  pip3 cache purge;
 
 WORKDIR /app
 COPY src/mysql2csv ./mysql2csv

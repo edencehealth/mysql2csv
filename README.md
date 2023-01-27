@@ -15,8 +15,8 @@ The program produces the following usage documentation when invoked with the
 `--help` and `-h` command-line arguments:
 
 ```
-usage: mysql2csv [-h] [--debug] [--user USER] [--password PASSWORD]
-                 [--host HOST] [--database DATABASE] [--path PATH]
+usage: mysql2csv [-h] [--user USER] [--password PASSWORD] [--host HOST]
+                 [--database DATABASE] [--path PATH]
                  [--csvdialect {excel,excel-tab,unix}]
                  [--csvencoding CSVENCODING]
                  [--loglevel {CRITICAL,FATAL,ERROR,WARN,WARNING,INFO,DEBUG}]
@@ -29,15 +29,14 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  --debug               enable debug output (default: False)
   --user USER           username to use when connecting to the database
                         (default: root)
   --password PASSWORD   password string to use when connecting to the database
-                        (default: testing)
+                        (default: password)
   --host HOST           network host to use when connecting to the database
-                        (default: db)
+                        (default: 127.0.0.1)
   --database DATABASE   database name to use after connecting to the database
-                        (default: mysql)
+                        (default: root)
   --path PATH           the base output path to use when creating csv files
                         (default: /output)
   --csvdialect {excel,excel-tab,unix}
@@ -48,8 +47,7 @@ options:
                         the character encoding to use when writing the CSV
                         files (default: utf8)
   --loglevel {CRITICAL,FATAL,ERROR,WARN,WARNING,INFO,DEBUG}
-                        the python logging level to use (default: DEBUG)
-
+                        the python logging level to use (default: INFO)
 ```
 
 ### Docker Compose Configuration

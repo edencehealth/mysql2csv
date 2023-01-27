@@ -52,11 +52,6 @@ def main() -> int:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     argp.add_argument(
-        "--debug",
-        action="store_true",
-        help="enable debug output",
-    )
-    argp.add_argument(
         "--user",
         default=os.environ.get("DB_USER", "root"),
         help="username to use when connecting to the database",
