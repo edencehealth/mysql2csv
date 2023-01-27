@@ -41,12 +41,12 @@ options:
   --path PATH           the base output path to use when creating csv files
                         (default: /output)
   --csvdialect {excel,excel-tab,unix}
-                        the python csv.writer dialect. see:
-                        https://docs.python.org/3/library/csv.html (default:
-                        excel)
+                        the python csv.writer dialect; see:
+                        https://docs.python.org/3/library/csv.html#csv.Dialect
+                        (default: unix)
   --csvencoding CSVENCODING
-                        the character encoding to use when writing the CSV files
-                        (default: utf8)
+                        the character encoding to use when writing the CSV
+                        files (default: utf8)
   --loglevel {CRITICAL,FATAL,ERROR,WARN,WARNING,INFO,DEBUG}
                         the python logging level to use (default: DEBUG)
 

@@ -16,11 +16,12 @@ def dump_tables(
     output_dir: str,
     dialect: str,
     encoding: str = "utf8",
-) -> bool:
+):
     """
     given a database server connection and a list of table names, write a CSV
     file containing the complete contents of each table into the given output
-    directory
+    directory; the given csv.Dialect and character encoding are used to write
+    the csv output files
     """
     for table_name in tables:
         logging.debug("dumping table: %s", table_name)
@@ -39,8 +40,6 @@ def dump_tables(
             writer.writerow(fieldnames)
             writer.writerows(data)
         logging.info("wrote to file: %s", output_filename)
-
-    return False
 
 
 def main() -> int:
@@ -86,7 +85,10 @@ def main() -> int:
         "--csvdialect",
         default=os.environ.get("CSV_DIALECT", "unix"),
         choices=csv.list_dialects(),
-        help="the python csv.writer dialect. see: https://docs.python.org/3/library/csv.html",
+        help=(
+            "the python csv.writer dialect; "
+            "see: https://docs.python.org/3/library/csv.html#csv.Dialect"
+        ),
     )
     argp.add_argument(
         "--csvencoding",
