@@ -13,6 +13,7 @@ services:
   mysql2csv:
     depends_on:
       - db
+    image: edence/mysql2csv
     build: .
     environment:
       CSV_DIALECT: "excel"  # see also: unix ; https://docs.python.org/3/library/csv.html
