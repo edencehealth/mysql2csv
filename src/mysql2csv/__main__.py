@@ -48,7 +48,7 @@ def main() -> int:
     """
     argp = argparse.ArgumentParser(
         prog=__package__,
-        description=("generates a CSV files from the MySQL/MariaDB databases"),
+        description=("generates CSV files from MySQL/MariaDB database tables"),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     argp.add_argument(
