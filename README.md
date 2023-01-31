@@ -65,6 +65,18 @@ options:
                         (default: False)
 ```
 
+#### Example Command-line Invocation
+
+In this example we're dumping a mysql internal table from a MariaDB server on the docker host:
+
+```sh
+$ docker run --rm --volume "$(pwd)/output:/output" edence/mysql2csv:latest --host host.docker.internal --user root --password testing --database mysql --overwrite time_zone
+2023-01-31 06:38:23,775 WARNING time_zone: overwriting existing output file /output/time_zone.csv
+2023-01-31 06:38:23,779 INFO time_zone: wrote 1000-row chunk to /output/time_zone.csv
+2023-01-31 06:38:23,780 INFO time_zone: wrote 787-row chunk to /output/time_zone.csv
+2023-01-31 06:38:23,781 INFO time_zone: finished dumping table to /output/time_zone.csv (1787 rows)
+```
+
 ### Docker Compose Configuration
 
 Here is an example of how the image can be deployed in a docker compose file:
