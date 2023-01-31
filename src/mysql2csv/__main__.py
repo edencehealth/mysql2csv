@@ -64,7 +64,7 @@ def dump_tables(
             writer.writerow(fieldnames)
             while data := cur.fetchmany():
                 writer.writerows(data)
-                logging.info(
+                logging.debug(
                     "%s: wrote %s-row chunk to %s",
                     table_name,
                     len(data),
