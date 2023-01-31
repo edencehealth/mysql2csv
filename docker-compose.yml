@@ -5,7 +5,7 @@ services:
       - "./input:/work:rw"
       - "dbdata:/var/lib/mysql"
     environment:
-      DB_PASSWORD: "testing"
+      MARIADB_ROOT_PASSWORD: "testing"
     ports:
       - "3306:3306"
     init: true
@@ -16,6 +16,7 @@ services:
     image: edence/mysql2csv
     build: .
     environment:
+      CHUNK_SIZE: 100000
       CSV_DIALECT: "excel"  # see also: unix ; https://docs.python.org/3/library/csv.html
       DB_DATABASE: "mysql"
       DB_HOST: "db"
