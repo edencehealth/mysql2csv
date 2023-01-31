@@ -23,6 +23,7 @@ services:
       DB_PASSWORD: "testing"
       DB_USER: "root"
       LOG_LEVEL: "DEBUG"
+      OVERWRITE: 1
     command:
       - time_zone
       - time_zone_transition

@@ -19,6 +19,7 @@ def dump_tables(
     dialect: str,
     encoding: str = "utf8",
     chunksize: int = 1000,
+    overwrite: bool = False,
 ):
     """
     given a database server connection and a list of table names, write a CSV
@@ -28,6 +29,24 @@ def dump_tables(
     """
     for table_name in tables:
         logging.debug("dumping table: %s", table_name)
+
+        output_filename = os.path.join(output_dir, table_name + ".csv")
+        if os.path.exists(output_filename):
+            if overwrite:
+                logging.warning(
+                    "%s: overwriting existing output file %s",
+                    table_name,
+                    output_filename,
+                )
+            else:
+                logging.warning(
+                    "%s: skipping table because output file %s already exists",
+                    table_name,
+                    output_filename,
+                )
+                continue
+
+        # see https://mariadb-corporation.github.io/mariadb-connector-python/cursor.html
         cur = cnxn.cursor()
         cur.arraysize = chunksize
 
@@ -40,7 +59,6 @@ def dump_tables(
         )
         fieldnames = [i[0] for i in cur.description]
 
-        output_filename = os.path.join(output_dir, table_name + ".csv")
         with open(output_filename, "w", newline="", encoding=encoding) as csvfile:
             writer = csv.writer(csvfile, dialect=dialect)
             writer.writerow(fieldnames)
@@ -66,6 +84,11 @@ def quoted_list(input: Sequence[str]) -> str:
     each member in double quotes; NOTE: NOT SAFE FOR UNTRUSTED INPUTS!
     """
     return ", ".join([f'"{item}"' for item in input])
+
+
+def parse_bool(argument: str) -> bool:
+    """parses the given argument string and returns a boolean evaluation"""
+    return argument.lower().strip() in ("1", "enable", "on", "true", "y", "yes")
 
 
 def main() -> int:
@@ -150,6 +173,15 @@ def main() -> int:
         help="character encoding used when writing CSV files",
     )
     argp.add_argument(
+        "--overwrite",
+        action=argparse.BooleanOptionalAction,
+        default=parse_bool(os.environ.get("OVERWRITE", "0")),
+        help=(
+            "if output files for the given tables already exist, overwrite "
+            "those files instead of skipping them"
+        ),
+    )
+    argp.add_argument(
         "table_name",
         nargs="+",
         help=(
@@ -177,6 +209,7 @@ def main() -> int:
                 args.csvdialect,
                 encoding=args.csvencoding,
                 chunksize=args.chunksize,
+                overwrite=args.overwrite,
             )
     except mariadb.Error as e:
         logging.error("database exception: %s", e)

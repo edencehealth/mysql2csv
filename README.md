@@ -19,6 +19,7 @@ usage: mysql2csv [-h] [--loglevel LOG_LEVEL] [--host DB_HOST] [--user DB_USER]
                  [--password DB_PASSWORD] [--database DB_DATABASE]
                  [--chunksize CHUNK_SIZE] [--path OUTPUT_PATH]
                  [--csvdialect CSV_DIALECT] [--csvencoding CSV_ENCODING]
+                 [--overwrite | --no-overwrite]
                  table_name [table_name ...]
 
 generates CSV files from MySQL/MariaDB database tables
@@ -58,7 +59,10 @@ options:
   --csvencoding CSV_ENCODING
                         character encoding used when writing CSV files
                         (default: utf8)
-
+  --overwrite, --no-overwrite
+                        if output files for the given tables already exist,
+                        overwrite those files instead of skipping them
+                        (default: False)
 ```
 
 ### Docker Compose Configuration
@@ -76,6 +80,7 @@ services:
       DB_PASSWORD: "testing"
       DB_USER: "root"
       LOG_LEVEL: "DEBUG"
+      OVERWRITE: 1
     command:
       - time_zone
       - time_zone_transition
