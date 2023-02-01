@@ -189,6 +189,15 @@ def main() -> int:
             "can be specified)"
         ),
     )
+    argp.add_argument(
+        "--password_required",
+        action=argparse.BooleanOptionalAction,
+        default=parse_bool(os.environ.get("PASSWORD_REQUIRED", "1")),
+        help=(
+            "If database does not require a password for login, omit the argument "
+            "from the mariadb connection object to prevent connection failure"
+        ),
+    )
     args = argp.parse_args()
     logging.basicConfig(
         level=args.loglevel,
@@ -196,12 +205,20 @@ def main() -> int:
     )
 
     try:
-        with mariadb.connect(
-            user=args.user,
-            password=args.password,
-            host=args.host,
-            database=args.database,
-        ) as cnxn:
+        if args.password_required:
+            database_cnxn = mariadb.connect(
+                user=args.user,
+                password=args.password,
+                host=args.host,
+                database=args.database,
+            )
+        else:
+            database_cnxn = mariadb.connect(
+                user=args.user,
+                host=args.host,
+                database=args.database,
+            )
+        with database_cnxn as cnxn:
             dump_tables(
                 cnxn,
                 args.table_name,

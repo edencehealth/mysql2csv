@@ -24,6 +24,7 @@ services:
       DB_USER: "root"
       LOG_LEVEL: "DEBUG"
       OVERWRITE: 1
+      PASSWORD_REQUIRED: 1
     command:
       - time_zone
       - time_zone_transition
