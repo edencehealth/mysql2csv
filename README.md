@@ -19,7 +19,7 @@ usage: mysql2csv [-h] [--loglevel LOG_LEVEL] [--host DB_HOST] [--user DB_USER]
                  [--password DB_PASSWORD] [--database DB_DATABASE]
                  [--chunksize CHUNK_SIZE] [--path OUTPUT_PATH]
                  [--csvdialect CSV_DIALECT] [--csvencoding CSV_ENCODING]
-                 [--overwrite | --no-overwrite]
+                 [--overwrite | --no-overwrite] [--no-password]
                  table_name [table_name ...]
 
 generates CSV files from MySQL/MariaDB database tables
@@ -63,6 +63,12 @@ options:
                         if output files for the given tables already exist,
                         overwrite those files instead of skipping them
                         (default: False)
+  --no-password         indicates the database connection should be made
+                        without a password - this is distinct from an empty
+                        string password; if this argument and a password are
+                        given together the password argument will be ignored
+                        (default: False)
+
 ```
 
 #### Example Command-line Invocation

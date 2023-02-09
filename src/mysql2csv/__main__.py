@@ -5,7 +5,7 @@ import csv
 import logging
 import os
 import sys
-from typing import Final, Sequence
+from typing import Dict, Final, Sequence
 
 import mariadb
 
@@ -89,6 +89,18 @@ def quoted_list(input: Sequence[str]) -> str:
 def parse_bool(argument: str) -> bool:
     """parses the given argument string and returns a boolean evaluation"""
     return argument.lower().strip() in ("1", "enable", "on", "true", "y", "yes")
+
+
+def log_config(args: argparse.Namespace) -> None:
+    """
+    given a parsed argument namespace, log it (while redacting the passwords
+    """
+    sensitive_items: Final = ("password",)
+
+    logging.info("--- Begin Config Report ---")
+    for k, v in vars(args).items():
+        logging.info('"%s": "%s"', k, v if k not in sensitive_items else "-REDACTED-")
+    logging.info("--- End Config Report ---")
 
 
 def main() -> int:
@@ -182,6 +194,17 @@ def main() -> int:
         ),
     )
     argp.add_argument(
+        "--no-password",
+        action="store_true",
+        default=parse_bool(os.environ.get("NO_PASSWORD", "0")),
+        help=(
+            "indicates the database connection should be made without a "
+            "password - this is distinct from an empty string password; if "
+            "this argument and a password are given together the password "
+            "argument will be ignored"
+        ),
+    )
+    argp.add_argument(
         "table_name",
         nargs="+",
         help=(
@@ -194,14 +217,21 @@ def main() -> int:
         level=args.loglevel,
         format=LOG_FORMAT,
     )
+    log_config(args)
+
+    connect_args: Dict[str, str] = {
+        "host": args.host,
+        "user": args.user,
+        "password": args.password,
+        "database": args.database,
+    }
+    if args.no_password and "password" in connect_args:
+        del connect_args["password"]
 
     try:
-        with mariadb.connect(
-            user=args.user,
-            password=args.password,
-            host=args.host,
-            database=args.database,
-        ) as cnxn:
+        # see: https://mariadb.com/kb/en/mysql_real_connect/ and
+        # https://mariadb-corporation.github.io/mariadb-connector-python/module.html#mariadb.connect
+        with mariadb.connect(**connect_args) as cnxn:
             dump_tables(
                 cnxn,
                 args.table_name,
