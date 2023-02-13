@@ -2,80 +2,90 @@
 """ utility for exporting mysql tables to CSV files  """
 import argparse
 import csv
+import datetime
 import logging
 import os
 import sys
-from typing import Dict, Final, Sequence
+from typing import Callable, Dict, Final, List, NamedTuple, Sequence
 
 import mariadb
 
 LOG_FORMAT: Final = "%(asctime)s %(levelname)s %(message)s"
+utcnow: Final[Callable[[], datetime.datetime]] = datetime.datetime.utcnow
 
 
-def dump_tables(
+class DeferredException(NamedTuple):
+    """
+    contains information about an exception that occurred during program operation
+    """
+
+    timestamp: datetime.datetime
+    exception_object: Exception
+
+
+def dump_table(
     cnxn: mariadb.Connection,
-    tables: Sequence[str],
+    table_name: str,
     output_dir: str,
     dialect: str,
     encoding: str = "utf8",
     chunksize: int = 1000,
     overwrite: bool = False,
-):
+) -> None:
     """
     given a database server connection and a list of table names, write a CSV
     file containing the complete contents of each table into the given output
     directory; the given csv.Dialect and character encoding are used to write
     the CSV output files
     """
-    for table_name in tables:
-        logging.debug("dumping table: %s", table_name)
+    logging.debug("dumping table: %s", table_name)
 
-        output_filename = os.path.join(output_dir, table_name + ".csv")
-        if os.path.exists(output_filename):
-            if overwrite:
-                logging.warning(
-                    "%s: overwriting existing output file %s",
-                    table_name,
-                    output_filename,
-                )
-            else:
-                logging.warning(
-                    "%s: skipping table because output file %s already exists",
-                    table_name,
-                    output_filename,
-                )
-                continue
+    output_filename = os.path.join(output_dir, table_name + ".csv")
+    if os.path.exists(output_filename):
+        if overwrite:
+            logging.warning(
+                "%s: overwriting existing output file %s",
+                table_name,
+                output_filename,
+            )
+        else:
+            logging.warning(
+                "%s: skipping table because output file %s already exists",
+                table_name,
+                output_filename,
+            )
+            return
 
-        # see https://mariadb-corporation.github.io/mariadb-connector-python/cursor.html
-        cur = cnxn.cursor()
-        cur.arraysize = chunksize
+    # see https://mariadb-corporation.github.io/mariadb-connector-python/cursor.html
+    cur = cnxn.cursor()
+    cur.arraysize = chunksize
 
-        # attempting to prevent injection... this could be improved
-        esc_table_name = cnxn.escape_string(table_name)
+    # attempting to prevent injection... this could be improved
+    esc_table_name = cnxn.escape_string(table_name)
 
-        cur.execute(
-            f"SELECT * FROM {esc_table_name}",  # nosec: escaping value
-            buffered=False,
-        )
-        fieldnames = [i[0] for i in cur.description]
+    cur.execute(
+        f"SELECT * FROM {esc_table_name}",  # nosec: escaping value
+        buffered=False,
+    )
+    fieldnames = [i[0] for i in cur.description]
 
-        with open(output_filename, "w", newline="", encoding=encoding) as csvfile:
-            writer = csv.writer(csvfile, dialect=dialect)
-            writer.writerow(fieldnames)
-            while data := cur.fetchmany():
-                writer.writerows(data)
-                logging.debug(
-                    "%s: wrote %s-row chunk to %s",
-                    table_name,
-                    len(data),
-                    output_filename,
-                )
-        logging.info(
-            "%s: finished dumping table to %s (%s rows)",
-            table_name,
-            output_filename,
-            cur.rowcount,
-        )
+    with open(output_filename, "w", newline="", encoding=encoding) as csvfile:
+        writer = csv.writer(csvfile, dialect=dialect)
+        writer.writerow(fieldnames)
+        while data := cur.fetchmany():
+            writer.writerows(data)
+            logging.debug(
+                "%s: wrote %s-row chunk to %s",
+                table_name,
+                len(data),
+                output_filename,
+            )
+    logging.info(
+        "%s: finished dumping table to %s (%s rows)",
+        table_name,
+        output_filename,
+        cur.rowcount,
+    )
 
 
 def quoted_list(input: Sequence[str]) -> str:
@@ -205,6 +215,16 @@ def main() -> int:
         ),
     )
     argp.add_argument(
+        "--defer-exceptions",
+        action=argparse.BooleanOptionalAction,
+        default=parse_bool(os.environ.get("DEFER_EXCEPTIONS", "0")),
+        help=(
+            "indicates the program should attempt to keep running when a "
+            "database error occurs; if this option is not enabled the program "
+            "will halt immediately when a database error occurs"
+        ),
+    )
+    argp.add_argument(
         "table_name",
         nargs="+",
         help=(
@@ -228,23 +248,44 @@ def main() -> int:
     if args.no_password and "password" in connect_args:
         del connect_args["password"]
 
-    try:
-        # see: https://mariadb.com/kb/en/mysql_real_connect/ and
-        # https://mariadb-corporation.github.io/mariadb-connector-python/module.html#mariadb.connect
-        with mariadb.connect(**connect_args) as cnxn:
-            dump_tables(
-                cnxn,
-                args.table_name,
-                args.path,
-                args.csvdialect,
-                encoding=args.csvencoding,
-                chunksize=args.chunksize,
-                overwrite=args.overwrite,
+    deferred: List[DeferredException] = list()
+
+    # see: https://mariadb.com/kb/en/mysql_real_connect/ and
+    # https://mariadb-corporation.github.io/mariadb-connector-python/module.html#mariadb.connect
+    with mariadb.connect(**connect_args) as cnxn:
+        for table_name in args.table_name:
+            try:
+                dump_table(
+                    cnxn,
+                    table_name,
+                    args.path,
+                    args.csvdialect,
+                    encoding=args.csvencoding,
+                    chunksize=args.chunksize,
+                    overwrite=args.overwrite,
+                )
+            except mariadb.Error as e:
+                logging.warning(
+                    "%sdatabase exception: %s",
+                    "DEFERRING " if args.defer_exceptions else "",
+                    e,
+                )
+                if not args.defer_exceptions:
+                    return 1
+                deferred.append(DeferredException(utcnow(), e))
+
+    if deferred:
+        logging.info("Re-printing previously-deferred database exceptions")
+        for de in deferred:
+            logging.error(
+                "DEFERRED DATABASE EXCEPTION FROM %s: %s",
+                de.timestamp,
+                de.exception_object,
             )
-    except mariadb.Error as e:
-        logging.error("database exception: %s", e)
+        logging.info("exiting (after deferred exceptions)")
         return 1
 
+    logging.info("exiting")
     return 0
 
 

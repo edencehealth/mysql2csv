@@ -15,16 +15,17 @@ services:
       - db
     image: edence/mysql2csv
     build: .
-    environment:
-      CHUNK_SIZE: 100000
-      CSV_DIALECT: "excel"  # see also: unix ; https://docs.python.org/3/library/csv.html
-      DB_DATABASE: "mysql"
-      DB_HOST: "db"
-      DB_PASSWORD: "testing"
-      DB_USER: "root"
-      LOG_LEVEL: "DEBUG"
-      OVERWRITE: 1
-      NO_PASSWORD: 0
+    # environment:
+      # CHUNK_SIZE: 100000
+      # CSV_DIALECT: "excel"  # see also: unix ; https://docs.python.org/3/library/csv.html
+      # DB_DATABASE: "mysql"
+      # DB_HOST: "db"
+      # DB_PASSWORD: "testing"
+      # DB_USER: "root"
+      # LOG_LEVEL: "DEBUG"
+      # OVERWRITE: 1
+      # NO_PASSWORD: 0
+      # DEFER_EXCEPTIONS: 1
     command:
       - time_zone
       - time_zone_transition
