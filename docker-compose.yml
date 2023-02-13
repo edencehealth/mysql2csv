@@ -25,6 +25,7 @@ services:
       LOG_LEVEL: "DEBUG"
       OVERWRITE: 1
       NO_PASSWORD: 0
+      DEFER_EXCEPTIONS: 1
     command:
       - time_zone
       - time_zone_transition

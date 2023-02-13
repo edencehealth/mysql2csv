@@ -20,6 +20,7 @@ usage: mysql2csv [-h] [--loglevel LOG_LEVEL] [--host DB_HOST] [--user DB_USER]
                  [--chunksize CHUNK_SIZE] [--path OUTPUT_PATH]
                  [--csvdialect CSV_DIALECT] [--csvencoding CSV_ENCODING]
                  [--overwrite | --no-overwrite] [--no-password]
+                 [--defer-exceptions | --no-defer-exceptions]
                  table_name [table_name ...]
 
 generates CSV files from MySQL/MariaDB database tables
@@ -68,6 +69,12 @@ options:
                         string password; if this argument and a password are
                         given together the password argument will be ignored
                         (default: False)
+  --defer-exceptions, --no-defer-exceptions
+                        indicates the program should attempt to keep running
+                        when a database error occurs; if the is not enabled
+                        the program will halt immediately when a database
+                        error occurs (default: False)
+
 
 ```
 
@@ -99,6 +106,7 @@ services:
       DB_USER: "root"
       LOG_LEVEL: "DEBUG"
       OVERWRITE: 1
+      DEFER_EXCEPTIONS: 1
     command:
       - time_zone
       - time_zone_transition
