@@ -1,7 +1,7 @@
-**/.DS_Store
-**/.mypy_cache
-venv
+.DS_Store
+.mypy_cache
 .venv
-misc
 input/*
+misc
 output/*
+venv
