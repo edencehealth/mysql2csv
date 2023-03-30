@@ -224,7 +224,7 @@ def main() -> int:
         help=(
             "indicates the program should attempt to keep running when a "
             "database error occurs; if this option is not enabled the program "
-            "will halt immediately when a database error occurs"
+            "will halt immediately on error"
         ),
     )
     argp.add_argument(
