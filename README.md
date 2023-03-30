@@ -71,11 +71,9 @@ options:
                         (default: False)
   --defer-exceptions, --no-defer-exceptions
                         indicates the program should attempt to keep running
-                        when a database error occurs; if the is not enabled
-                        the program will halt immediately when a database
-                        error occurs (default: False)
-
-
+                        when a database error occurs; if this option is not
+                        enabled the program will halt immediately on error
+                        (default: False)
 ```
 
 #### Example Command-line Invocation
