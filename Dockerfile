@@ -1,36 +1,32 @@
-FROM debian:testing-slim
+FROM python:3.11-alpine
 LABEL maintainer="edenceHealth <info@edence.health>"
 
 COPY requirements.txt /
 
+ARG AG="apt-get -yq --no-install-recommends"
+ARG DEBIAN_FRONTEND=noninteractive
+
 RUN set -eux; \
-  export \
-    AG="apt-get -yq" \
-    DEBIAN_FRONTEND=noninteractive \
+  apk add --update-cache \
+    mariadb-connector-c \
   ; \
-  $AG update; \
-  $AG upgrade; \
-  $AG install --no-install-recommends \
+  apk add --virtual build-dependencies \
     gcc \
-    libmariadb-dev \
-    mariadb-client \
-    python3-dev \
-    python3-pip \
+    mariadb-connector-c-dev \
+    musl-dev \
   ; \
-  pip3 install -r /requirements.txt; \
-  pip3 cache purge; \
-  $AG purge \
-    gcc \
-    python3-dev \
-  ; \
-  $AG autoremove; \
+  pip install -r /requirements.txt; \
+  pip cache purge; \
+  apk del build-dependencies; \
   rm -rf \
-    /var/lib/apt/lists/* \
+    /var/cache/apk/* \
+    ~/.cache \
   ;
 
 WORKDIR /app
-COPY src/mysql2csv ./mysql2csv
+COPY src/mysql2csv /app/mysql2csv
 ENV PYTHONPATH="/app"
 
+VOLUME [ "/output" ]
 WORKDIR /output
 ENTRYPOINT ["python3", "-m", "mysql2csv"]

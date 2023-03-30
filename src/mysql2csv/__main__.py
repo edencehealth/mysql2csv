@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """ utility for exporting mysql tables to CSV files  """
+# pylint: disable=too-many-arguments,
 import argparse
 import csv
 import datetime
 import logging
 import os
 import sys
-from typing import Callable, Dict, Final, List, NamedTuple, Sequence
+from typing import Callable, Dict, Final, Iterable, List, NamedTuple
 
 import mariadb
 
 LOG_FORMAT: Final = "%(asctime)s %(levelname)s %(message)s"
+# pylint: disable=invalid-name
 utcnow: Final[Callable[[], datetime.datetime]] = datetime.datetime.utcnow
 
 
@@ -88,12 +90,12 @@ def dump_table(
     )
 
 
-def quoted_list(input: Sequence[str]) -> str:
+def quoted_list(inlist: Iterable[str]) -> str:
     """
     return a joined, comma-separated version of the given list of strings with
     each member in double quotes; NOTE: NOT SAFE FOR UNTRUSTED INPUTS!
     """
-    return ", ".join([f'"{item}"' for item in input])
+    return ", ".join([f'"{item}"' for item in inlist])
 
 
 def parse_bool(argument: str) -> bool:
@@ -117,6 +119,7 @@ def main() -> int:
     """
     entrypoint for direct execution; returns an integer suitable for use with sys.exit
     """
+    # pylint: disable=protected-access
     log_level_choices = list(logging._nameToLevel)[:-1]
     dialect_choices = csv.list_dialects()
 
@@ -248,7 +251,7 @@ def main() -> int:
     if args.no_password and "password" in connect_args:
         del connect_args["password"]
 
-    deferred: List[DeferredException] = list()
+    deferred: List[DeferredException] = []
 
     # see: https://mariadb.com/kb/en/mysql_real_connect/ and
     # https://mariadb-corporation.github.io/mariadb-connector-python/module.html#mariadb.connect
